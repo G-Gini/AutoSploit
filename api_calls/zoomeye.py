@@ -1,7 +1,7 @@
 import os
 import base64
 import json
-
+import traceback
 import requests
 
 from lib.settings import start_animation
@@ -20,26 +20,13 @@ class ZoomEyeAPIHook(object):
     so we're going to use some 'lifted' credentials to login for us
     """
 
-    def __init__(self, query=None, proxy=None, agent=None, save_mode=None, **kwargs):
+    def __init__(self, token=None,query=None, proxy=None, agent=None, save_mode=None, **kwargs):
         self.query = query
         self.host_file = HOST_FILE
         self.proxy = proxy
         self.user_agent = agent
-        self.user_file = "{}/etc/text_files/users.lst".format(os.getcwd())
-        self.pass_file = "{}/etc/text_files/passes.lst".format(os.getcwd())
         self.save_mode = save_mode
-
-    @staticmethod
-    def __decode(filepath):
-        """
-        we all know what this does
-        """
-        with open(filepath) as f:
-            data = f.read()
-            token, n = data.split(":")
-            for _ in range(int(n.strip())):
-                token = base64.b64decode(token)
-        return token.strip()
+        self.token=token
 
     def __get_auth(self):
         """
@@ -47,12 +34,7 @@ class ZoomEyeAPIHook(object):
         before you can access the API, this is where the 'lifted' creds come into
         play.
         """
-        username = self.__decode(self.user_file)
-        password = self.__decode(self.pass_file)
-        data = {"username": username, "password": password}
-        req = requests.post(API_URLS["zoomeye"][0], json=data)
-        token = json.loads(req.content)
-        return token
+        return self.token
 
     def search(self):
         """
@@ -64,15 +46,15 @@ class ZoomEyeAPIHook(object):
         try:
             token = self.__get_auth()
             if self.user_agent is None:
-                headers = {"Authorization": "JWT {}".format(str(token["access_token"]))}
+                headers = {"API-KEY": "{}".format(str(token))}
             else:
                 headers = {
-                    "Authorization": "JWT {}".format(str(token["access_token"])),
+                    "API-KEY": "{}".format(str(token)),
                     "User-Agent": self.user_agent["User-Agent"]  # oops
                 }
             params = {"query": self.query, "page": "1", "facet": "ipv4"}
             req = requests.get(
-                API_URLS["zoomeye"][1].format(query=self.query),
+                API_URLS["zoomeye"],
                 params=params, headers=headers, proxies=self.proxy
             )
             _json_data = req.json()
@@ -85,5 +67,7 @@ class ZoomEyeAPIHook(object):
             write_to_file(discovered_zoomeye_hosts, self.host_file, mode=self.save_mode)
             return True
         except Exception as e:
+            traceback.print_exc()
+            print(req.text)
             raise AutoSploitAPIConnectionError(str(e))
 
