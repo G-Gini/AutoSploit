@@ -128,17 +128,15 @@ AUTOSPLOIT_PROMPT = "\033[31m{}\033[0m@\033[36mautosploit\033[0m# ".format(getpa
 # all the paths to the API tokens
 API_KEYS = {
     "censys": ("{}/etc/tokens/censys.key".format(CUR_DIR), "{}/etc/tokens/censys.id".format(CUR_DIR)),
-    "shodan": ("{}/etc/tokens/shodan.key".format(CUR_DIR), )
+    "shodan": ("{}/etc/tokens/shodan.key".format(CUR_DIR), ),
+    "zoomeye":("{}/etc/tokens/zoomeye.key".format(CUR_DIR), )
 }
 
 # all the URLs that we will use while doing the searching
 API_URLS = {
     "shodan": "https://api.shodan.io/shodan/host/search?key={token}&query={query}",
-    "censys": "https://censys.io/api/v1/search/ipv4",
-    "zoomeye": (
-        "https://api.zoomeye.org/user/login",
-        "https://api.zoomeye.org/web/search"
-    )
+    "censys": "https://search.censys.io/api/v2/hosts/search?q={query}&per_page=100&virtual_hosts=EXCLUDE&cursor={cursor}",
+    "zoomeye": "https://api.zoomeye.org/web/search"
 }
 
 # has msf been launched?
@@ -299,7 +297,8 @@ def load_api_keys(unattended=False, path="{}/etc/tokens".format(CUR_DIR)):
             lib.output.info("{} API token loaded from {}".format(key.title(), API_KEYS[key][0]))
     api_tokens = {
         "censys": (open(API_KEYS["censys"][0]).read().rstrip(), open(API_KEYS["censys"][1]).read().rstrip()),
-        "shodan": (open(API_KEYS["shodan"][0]).read().rstrip(), )
+        "shodan": (open(API_KEYS["shodan"][0]).read().rstrip(), ),
+        "zoomeye":(open(API_KEYS["zoomeye"][0]).read().rstrip(), ),
     }
     return api_tokens
 
